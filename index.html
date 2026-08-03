@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portapapeles · Uso seguro de la IA en el trabajo</title>
+<meta name="description" content="Simulacro interactivo sobre el uso seguro de la inteligencia artificial en el puesto de trabajo: qué se puede pegar, qué hay que verificar y qué herramienta usar.">
+<style>
+:root{
+  --bg:#f4f6fa; --bg-alt:#eef2f8; --panel:#ffffff; --panel-2:#f7f9fc;
+  --line:#dde4ee; --line-2:#c9d4e2;
+  --txt:#152033; --txt-2:#43536b; --dim:#6b7a90;
+  --pri:#1d6b5f; --pri-2:#14524a; --pri-soft:#e7f2f0; --pri-glow:rgba(29,107,95,.22);
+  --ok:#15803d;  --ok-soft:#e8f5ec;
+  --warn:#b45309; --warn-soft:#fdf4e7;
+  --err:#b91c1c; --err-soft:#fdecec;
+  --info:#5b21b6; --info-soft:#f1ecfd;
+  --mono:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;
+  --sans:'Segoe UI',system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+  --r:10px; --r-sm:6px;
+  --sh:0 1px 2px rgba(21,32,51,.05), 0 2px 8px rgba(21,32,51,.04);
+  --sh-2:0 4px 16px rgba(21,32,51,.09);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--txt);font-family:var(--sans);
+  -webkit-font-smoothing:antialiased;line-height:1.55}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px 64px}
+h1,h2,h3{font-weight:650;letter-spacing:-.01em;line-height:1.25}
+a{color:var(--pri)}
+
+/* ---------- cabecera ---------- */
+#hud{position:sticky;top:0;z-index:200;background:var(--panel);
+  border-bottom:1px solid var(--line);box-shadow:var(--sh)}
+.hud-in{max-width:1080px;margin:0 auto;padding:9px 20px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;white-space:nowrap}
+.logo{height:32px;display:grid;place-items:center;flex:none;overflow:hidden}
+.logo img,.logo svg{height:100%;width:auto;display:block}
+.brand-t{font-size:14.5px;font-weight:650;line-height:1.2;max-width:230px;overflow:hidden;text-overflow:ellipsis}
+.brand-s{font-size:11.5px;color:var(--dim)}
+.hud-stat{display:flex;flex-direction:column;gap:4px;min-width:126px}
+.hud-lab{font-size:10.5px;color:var(--dim)}
+.hud-lab b{color:var(--txt);font-weight:600}
+.bar{height:6px;background:var(--bg-alt);border-radius:99px;overflow:hidden;width:132px}
+.bar i{display:block;height:100%;border-radius:99px;background:var(--pri);
+  transition:width .5s cubic-bezier(.2,.9,.3,1)}
+.bar.leak i{background:var(--ok)}
+.bar.leak.warn i{background:var(--warn)}
+.bar.leak.crit i{background:var(--err)}
+.hud-sp{flex:1}
+.ghost-btn{font-size:12.5px;background:transparent;color:var(--txt-2);border:1px solid var(--line-2);
+  padding:7px 13px;cursor:pointer;border-radius:var(--r-sm);transition:.15s;font-family:var(--sans)}
+.ghost-btn:hover{background:var(--panel-2);border-color:var(--dim);color:var(--txt)}
+
+/* ---------- genérico ---------- */
+.screen{display:none;animation:fadein .35s ease both}
+.screen.on{display:block}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.eyebrow{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--pri);
+  font-weight:600;margin-bottom:9px}
+.lead{color:var(--txt-2);line-height:1.65;max-width:66ch}
+.btn{font-size:14px;font-weight:600;cursor:pointer;font-family:var(--sans);
+  border:1px solid var(--pri);color:#fff;background:var(--pri);
+  padding:11px 22px;border-radius:var(--r-sm);transition:.15s}
+.btn:hover{background:var(--pri-2);border-color:var(--pri-2)}
+.btn.sec{background:var(--panel);color:var(--txt);border-color:var(--line-2)}
+.btn.sec:hover{background:var(--panel-2);border-color:var(--dim)}
+.btn.warn{background:var(--warn);border-color:var(--warn)}
+.btn.warn:hover{filter:brightness(.92)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh)}
+
+/* ---------- portada ---------- */
+.hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);
+  gap:36px;align-items:center;padding:52px 0 34px}
+.hero h1{font-size:clamp(27px,3.6vw,40px);margin-bottom:14px}
+.hero .lead{font-size:16.5px}
+.start-row{display:flex;gap:10px;margin-top:26px;flex-wrap:wrap}
+input[type=text]{background:var(--panel);border:1px solid var(--line-2);color:var(--txt);
+  padding:11px 14px;border-radius:var(--r-sm);font-family:var(--sans);font-size:14px;
+  min-width:250px;outline:none;transition:.15s}
+input[type=text]::placeholder{color:var(--dim)}
+input[type=text]:focus{border-color:var(--pri);box-shadow:0 0 0 3px var(--pri-glow)}
+.scene{background:var(--pri-soft);border-radius:14px;padding:22px;color:var(--pri)}
+.scene svg{display:block;width:100%;height:auto}
+.chan{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+.chan div{background:var(--panel);border-radius:var(--r-sm);padding:11px 6px;text-align:center;
+  font-size:12px;color:var(--txt-2);font-weight:500}
+.chan span{display:block;font-size:19px;line-height:1;margin-bottom:6px}
+.mods-preview{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:6px}
+.modcard{padding:16px 18px}
+.modcard h3{font-size:15px;margin-bottom:5px}
+.modcard p{font-size:13px;color:var(--txt-2);line-height:1.55;margin-bottom:9px}
+.modcard .dur{font-size:12px;color:var(--dim)}
+.calm{margin-top:22px;background:var(--ok-soft);border:1px solid #cbe8d5;
+  border-radius:var(--r);padding:15px 18px;display:flex;gap:13px;align-items:flex-start}
+.calm .ic{font-size:19px;line-height:1.2}
+.calm p{font-size:13.5px;color:#14603a;line-height:1.6}
+.calm b{font-weight:650}
+.figures{margin-top:22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
+  gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.figures div{background:var(--panel);padding:16px 12px;text-align:center}
+.figures .n{font-size:22px;font-weight:650;color:var(--pri)}
+.figures .l{font-size:12px;color:var(--dim);margin-top:3px}
+.legal{margin-top:26px;font-size:12.5px;color:var(--dim);line-height:1.65;
+  border-top:1px solid var(--line);padding-top:16px}
+.pie{margin-top:30px;border-top:1px solid var(--line);padding-top:22px;
+  display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.pie-logo{flex:none}
+.pie-logo svg,.pie-logo img{height:62px;width:auto;display:block}
+.pie-txt{border-left:1px solid var(--line);padding-left:22px}
+.pie-emp{font-size:15px;font-weight:650;color:var(--txt)}
+.pie-t{font-size:13.5px;color:var(--txt-2);margin-top:4px}
+.pie-s{font-size:13px;color:var(--dim);margin-top:1px}
+.pie-sp{flex:1}
+.pie-nota{font-size:12px;color:var(--dim);text-align:right;line-height:1.6;max-width:33ch}
+
+/* ---------- inicio ---------- */
+.hub-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(292px,1fr));gap:16px;margin-top:24px}
+.mod{padding:22px;position:relative;cursor:pointer;transition:.18s}
+.mod:hover{box-shadow:var(--sh-2);border-color:var(--line-2);transform:translateY(-2px)}
+.mod.locked{opacity:.55;cursor:not-allowed}
+.mod.locked:hover{transform:none;box-shadow:var(--sh)}
+.mod.done{border-color:#bfe3cd;background:linear-gradient(180deg,var(--ok-soft),var(--panel) 62px)}
+.mod .ic{font-size:29px;line-height:1}
+.mod h3{font-size:17px;margin:12px 0 7px}
+.mod p{color:var(--txt-2);font-size:13.5px;line-height:1.6;min-height:62px}
+.tag{position:absolute;top:15px;right:15px;font-size:11px;font-weight:600;
+  padding:4px 10px;border-radius:99px;background:var(--bg-alt);color:var(--dim)}
+.tag.done{color:var(--ok);background:var(--ok-soft)}
+.tag.live{color:var(--pri);background:var(--pri-soft)}
+.tag.lock{color:var(--warn);background:var(--warn-soft)}
+
+/* ---------- mesa de trabajo (módulos 1 y 2) ---------- */
+.desk{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;margin-top:18px;align-items:start}
+.sheet{padding:0;overflow:hidden}
+.sheet-h{padding:15px 20px;border-bottom:1px solid var(--line);background:var(--panel-2)}
+.sheet-h .k{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);font-weight:600}
+.sheet-h h3{font-size:17px;margin-top:4px}
+.sheet-h p{font-size:13px;color:var(--txt-2);margin-top:6px;line-height:1.6}
+.doc{padding:22px 24px;font-size:15px;line-height:2;max-height:400px;overflow-y:auto;
+  background:repeating-linear-gradient(180deg,transparent 0 29px,#f2f5f9 29px 30px)}
+.doc p{margin-bottom:14px}
+
+/* el segmento es el corazón del ejercicio */
+.seg{cursor:pointer;border-radius:3px;padding:2px 1px;transition:.12s;
+  border-bottom:2px solid transparent}
+.seg:hover{background:var(--pri-soft);border-bottom-color:var(--pri)}
+.seg.hid{background:var(--txt);color:transparent;border-bottom-color:var(--txt);
+  text-shadow:none;user-select:none}
+.seg.hid::selection{background:var(--txt)}
+.seg.mark{background:var(--warn-soft);border-bottom-color:var(--warn);color:var(--warn)}
+.doc.done .seg{cursor:default;pointer-events:none}
+.doc.done .seg.ok{background:var(--ok-soft);border-bottom-color:var(--ok);color:var(--ok)}
+.doc.done .seg.leak{background:var(--err-soft);border-bottom-color:var(--err);color:var(--err)}
+.doc.done .seg.over{background:var(--warn-soft);border-bottom-color:var(--warn);color:var(--warn)}
+.doc.done .seg.hid{color:inherit;text-shadow:none}
+
+.panel-side{position:sticky;top:70px;display:grid;gap:14px}
+.gauge{padding:18px}
+.gauge .lab{font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--dim);font-weight:600}
+.gauge .big{font-size:30px;font-weight:650;margin:6px 0 4px}
+.gauge .note{font-size:12.5px;color:var(--dim);line-height:1.5}
+.gauge .track{height:8px;background:var(--bg-alt);border-radius:99px;overflow:hidden;margin-top:10px}
+.gauge .track i{display:block;height:100%;transition:width .35s}
+.acts{display:grid;gap:9px}
+.hint{font-size:12.5px;color:var(--txt-2);background:var(--pri-soft);border-radius:var(--r-sm);
+  padding:12px 14px;line-height:1.6}
+.hint b{color:var(--pri)}
+.counter{font-size:12.5px;color:var(--dim);text-align:center}
+
+.verdict{margin-top:16px;padding:18px 20px;border-radius:var(--r);border:1px solid var(--line);
+  border-left:4px solid var(--pri);background:var(--panel);animation:fadein .3s}
+.verdict.good{border-left-color:var(--ok)}
+.verdict.bad{border-left-color:var(--err)}
+.verdict.mid{border-left-color:var(--warn)}
+.verdict h4{font-size:15px;margin-bottom:8px}
+.verdict.good h4{color:var(--ok)} .verdict.bad h4{color:var(--err)} .verdict.mid h4{color:var(--warn)}
+.verdict p{font-size:13.5px;color:var(--txt-2);line-height:1.65;margin-bottom:12px}
+.flist{list-style:none;display:grid;gap:8px}
+.flist li{font-size:12.8px;color:var(--txt-2);display:flex;gap:9px;align-items:flex-start;line-height:1.55}
+.flist .nb{font-size:10.5px;border-radius:99px;padding:2px 8px;font-weight:700;flex:none;margin-top:2px;color:#fff}
+.nb.e{background:var(--err)} .nb.o{background:var(--warn)} .nb.b{background:var(--ok)}
+.riesgos{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);
+  display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.rlab{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--info);font-weight:650;margin-right:4px}
+.chip{font-size:11.5px;padding:4px 10px;border-radius:99px;background:var(--info-soft);color:var(--info)}
+
+/* ---------- módulo 3 ---------- */
+.stage{max-width:760px;margin:20px auto 0;padding:0}
+.sit{padding:20px 22px;border-bottom:1px solid var(--line)}
+.sit .k{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);font-weight:600}
+.sit h3{font-size:18px;margin:5px 0 10px}
+.sit p{font-size:14.5px;color:var(--txt);line-height:1.7}
+.opts{padding:16px 22px;display:grid;gap:9px;background:var(--panel-2)}
+.opt{text-align:left;padding:13px 16px;border:1px solid var(--line-2);background:var(--panel);color:var(--txt);
+  border-radius:var(--r-sm);cursor:pointer;font-size:13.8px;line-height:1.5;transition:.15s;font-family:var(--sans)}
+.opt:hover{border-color:var(--pri);background:var(--pri-soft)}
+.opt .k{font-family:var(--mono);font-size:11px;color:var(--pri);margin-right:9px;font-weight:700}
+.fb{margin:0 22px 18px;padding:14px 16px;border-radius:var(--r-sm);font-size:13.5px;line-height:1.65;animation:fadein .25s}
+.fb.good{background:var(--ok-soft);border-left:3px solid var(--ok);color:#14603a}
+.fb.bad{background:var(--err-soft);border-left:3px solid var(--err);color:#8f1a1a}
+.fb.mid{background:var(--warn-soft);border-left:3px solid var(--warn);color:#8a4108}
+.fb b{display:block;font-size:12.5px;margin-bottom:6px;font-weight:700}
+
+/* ---------- informe ---------- */
+.rank{text-align:center;padding:36px 20px 8px}
+.rank .medal{font-size:60px;line-height:1}
+.rank h2{font-size:clamp(23px,4vw,34px);margin:12px 0 6px}
+.rank .score{font-size:14px;color:var(--txt-2)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(186px,1fr));gap:13px;margin-top:24px}
+.stat{padding:17px}
+.stat .lab{font-size:12px;color:var(--dim);margin-bottom:8px}
+.stat .big{font-size:27px;font-weight:650}
+.stat .note{font-size:12px;color:var(--dim);margin-top:5px;line-height:1.5}
+.metric{margin-top:15px}
+.metric .row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+.metric .track{height:9px;background:var(--bg-alt);border-radius:99px;overflow:hidden}
+.metric .track i{display:block;height:100%;transition:width .7s cubic-bezier(.2,.9,.3,1)}
+.metric .note{font-size:12px;color:var(--dim);margin-top:6px;line-height:1.5}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(156px,1fr));gap:12px;margin-top:14px}
+.badge{padding:16px 13px;text-align:center;border-radius:var(--r);border:1px solid var(--line);background:var(--panel)}
+.badge.got{border-color:#f0d9a8;background:var(--warn-soft)}
+.badge .bi{font-size:27px;filter:grayscale(1);opacity:.28}
+.badge.got .bi{filter:none;opacity:1}
+.badge .bn{font-size:12.5px;font-weight:650;margin-top:8px}
+.badge .bd{font-size:11px;color:var(--dim);margin-top:4px;line-height:1.45}
+.sec-t{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--pri);font-weight:650;
+  margin:34px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.tips{display:grid;gap:9px}
+.tip{padding:13px 16px;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--info);
+  border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:13.3px;line-height:1.6;color:var(--txt-2)}
+.rlist{display:grid;gap:8px}
+.rrow{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:var(--r-sm);
+  background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--line-2);flex-wrap:wrap}
+.rrow.ok{border-left-color:var(--ok)} .rrow.half{border-left-color:var(--warn)} .rrow.ko{border-left-color:var(--err)}
+.rrow .rn{font-size:13.5px;font-weight:600;flex:1;min-width:200px}
+.rrow .rd{font-size:12.5px;color:var(--dim);flex-basis:100%}
+.rrow .rv{font-size:11.5px;color:var(--dim)}
+.rrow.ok .rv{color:var(--ok)} .rrow.half .rv{color:var(--warn)} .rrow.ko .rv{color:var(--err)}
+
+/* ---------- avisos ---------- */
+#toasts{position:fixed;right:18px;bottom:18px;z-index:9999;display:flex;flex-direction:column;gap:9px;align-items:flex-end}
+.toast{padding:11px 17px;border-radius:var(--r-sm);font-size:13px;font-weight:600;
+  background:var(--panel);border:1px solid var(--pri);color:var(--pri);
+  animation:tin .3s ease both;box-shadow:var(--sh-2)}
+.toast.bad{border-color:var(--err);color:var(--err)}
+.toast.gold{border-color:var(--warn);color:var(--warn)}
+@keyframes tin{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+
+/* ---------- accesibilidad ---------- */
+.skip{position:absolute;left:-9999px;top:0;z-index:10000;background:var(--pri);color:#fff;
+  padding:11px 18px;font-size:13px;font-weight:600;border-radius:0 0 var(--r-sm) 0}
+.skip:focus{left:0}
+:focus-visible{outline:3px solid var(--pri);outline-offset:2px;border-radius:3px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+  clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;
+    transition-duration:.001ms!important;scroll-behavior:auto!important}
+}
+@media(forced-colors:active){
+  .chip,.rrow,.badge,.card,.figures div,.seg.hid{border:1px solid CanvasText}
+  .bar i{background:Highlight!important}
+}
+@media(max-width:900px){
+  .hero{grid-template-columns:1fr;gap:26px;padding:34px 0 24px}
+  .desk{grid-template-columns:1fr}
+  .panel-side{position:static}
+  .bar{width:96px}
+}
+@media print{
+  @page{margin:14mm}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #hud,#toasts,.no-print,.skip{display:none!important}
+  body{background:#fff;color:#000}
+  .wrap{padding:0;max-width:none}
+  .card{box-shadow:none;border-color:#bbb}
+  .sec-t{page-break-after:avoid;break-after:avoid}
+  .stat,.badge,.tip,.rrow,.metric,.stats{page-break-inside:avoid;break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<a href="#main" class="skip">Saltar al contenido principal</a>
+
+<header id="hud">
+  <div class="hud-in">
+    <div class="brand">
+      <div class="logo" id="brandLogo" aria-hidden="true"></div>
+      <div>
+        <div class="brand-t" id="brandName">Tu empresa</div>
+        <div class="brand-s">Uso seguro de la IA</div>
+      </div>
+    </div>
+    <div class="hud-stat" id="hudPart" hidden>
+      <div class="hud-lab">Participante</div>
+      <div class="hud-lab"><b id="hAgent">—</b></div>
+    </div>
+    <div class="hud-stat" id="hudPts" hidden>
+      <div class="hud-lab">Puntos <b id="hXp">0</b></div>
+      <div class="bar"><i id="hXpBar" style="width:0%"></i></div>
+    </div>
+    <div class="hud-stat" id="hudLeak" hidden>
+      <div class="hud-lab" id="leakLab">Información protegida <b id="hLeakN">100</b>%</div>
+      <div class="bar leak" id="hLeakWrap" role="progressbar" aria-labelledby="leakLab"
+           aria-valuemin="0" aria-valuemax="100" aria-valuenow="100"><i id="hLeakBar" style="width:100%"></i></div>
+    </div>
+    <div class="hud-sp"></div>
+    <button class="ghost-btn" id="btnSound" aria-pressed="true">Sonido activado</button>
+    <button class="ghost-btn no-print" id="btnHub" hidden>Volver al inicio</button>
+  </div>
+</header>
+
+<div class="wrap" id="main" tabindex="-1">
+
+<!-- ============ PORTADA ============ -->
+<section class="screen on" id="scr-boot">
+  <div class="hero">
+    <div>
+      <div class="eyebrow">Formación en seguridad · Inteligencia artificial</div>
+      <h1>Lo que pegas en la IA sale de la empresa</h1>
+      <p class="lead">Las herramientas de IA ayudan mucho y por eso las usamos. El problema no es usarlas:
+        es lo que se les entrega sin pensar y lo que se da por bueno sin comprobar.
+        En este simulacro trabajas con documentos reales y decides tú qué sale y qué se queda.</p>
+      <div class="start-row">
+        <label for="inName" class="sr-only">Tu nombre</label>
+        <input type="text" id="inName" placeholder="Tu nombre" maxlength="24" autocomplete="off">
+        <button class="btn" id="btnStart">Empezar el simulacro</button>
+      </div>
+    </div>
+
+    <div class="scene" aria-hidden="true">
+      <svg viewBox="0 0 320 170" role="img">
+        <rect x="24" y="18" width="120" height="130" rx="8" fill="#fff" stroke="currentColor" stroke-width="2.5"/>
+        <g fill="currentColor" opacity=".28">
+          <rect x="40" y="40" width="88" height="6" rx="3"/>
+          <rect x="40" y="56" width="70" height="6" rx="3"/>
+          <rect x="40" y="88" width="88" height="6" rx="3"/>
+          <rect x="40" y="104" width="54" height="6" rx="3"/>
+        </g>
+        <rect x="40" y="70" width="60" height="8" rx="2" fill="currentColor"/>
+        <rect x="40" y="120" width="42" height="8" rx="2" fill="currentColor"/>
+        <path d="M152 74h34M178 66l10 8-10 8" fill="none" stroke="currentColor" stroke-width="2.6"
+              stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="196" y="30" width="100" height="106" rx="12" fill="currentColor" fill-opacity=".12"
+              stroke="currentColor" stroke-width="2.5"/>
+        <circle cx="228" cy="70" r="6" fill="currentColor"/>
+        <circle cx="264" cy="70" r="6" fill="currentColor"/>
+        <path d="M226 98c8 9 32 9 40 0" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+        <path d="M246 30V16M232 16h28" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+      </svg>
+      <div class="chan">
+        <div><span>📋</span>Qué pegas</div>
+        <div><span>🔍</span>Qué verificas</div>
+        <div><span>🧰</span>Qué usas</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mods-preview">
+    <div class="card modcard">
+      <h3>1 · Antes de pegar</h3>
+      <p>Documentos de trabajo reales. Tocas el texto para tapar lo que no debe salir. Ojo: taparlo todo tampoco vale.</p>
+      <div class="dur">⏱ Unos 10 minutos</div>
+    </div>
+    <div class="card modcard">
+      <h3>2 · Antes de usar</h3>
+      <p>La IA ya ha respondido. Marca lo que hay que comprobar antes de enviárselo a un cliente.</p>
+      <div class="dur">⏱ Unos 7 minutos</div>
+    </div>
+    <div class="card modcard">
+      <h3>3 · La herramienta correcta</h3>
+      <p>Extensiones, cuentas personales y aplicaciones gratuitas. No todas las IA son iguales.</p>
+      <div class="dur">⏱ Unos 5 minutos</div>
+    </div>
+  </div>
+
+  <div class="calm">
+    <div class="ic" aria-hidden="true">🔒</div>
+    <p><b>Esto no es un examen ni una prohibición.</b> No se guarda ningún resultado y nadie verá tu puntuación.
+      El objetivo no es que dejes de usar la IA, sino que la uses sin regalar información de la empresa
+      ni firmar como tuyo algo que se ha inventado.</p>
+  </div>
+
+  <div class="figures">
+    <div><div class="n">6</div><div class="l">Documentos</div></div>
+    <div><div class="n">4</div><div class="l">Respuestas de IA</div></div>
+    <div><div class="n">5</div><div class="l">Categorías de riesgo</div></div>
+    <div><div class="n">22</div><div class="l">Minutos</div></div>
+  </div>
+
+  <p class="legal">Las empresas, personas, clientes y proveedores que aparecen en los documentos son ficticios
+    y se han creado para esta formación. El material es exclusivamente educativo.</p>
+
+  <footer class="pie">
+    <div class="pie-logo" id="pieLogo"></div>
+    <div class="pie-txt">
+      <p class="pie-emp" id="pieEmpresa"></p>
+      <p class="pie-t">Seguridad de la Información</p>
+      <p class="pie-s">Departamento de IT</p>
+    </div>
+    <div class="pie-sp"></div>
+    <p class="pie-nota">¿Dudas sobre si puedes usar una herramienta de IA para algo?
+      Pregúntanos en <span id="pieContacto"></span>.</p>
+  </footer>
+</section>
+
+<!-- ============ INICIO ============ -->
+<section class="screen" id="scr-hub">
+  <div style="padding:36px 0 6px">
+    <div class="eyebrow">Simulacro en curso</div>
+    <h2 style="font-size:clamp(22px,3.4vw,31px)">Buenos días, <span id="hubName"></span></h2>
+    <p class="lead" style="margin-top:9px">Tienes trabajo acumulado y la IA abierta en otra pestaña.
+      Elige por dónde empezar.</p>
+  </div>
+  <div class="hub-grid" id="hubGrid"></div>
+  <div id="hubFinal" style="margin-top:26px;text-align:center"></div>
+</section>
+
+<!-- ============ MESA DE TRABAJO (módulos 1 y 2) ============ -->
+<section class="screen" id="scr-desk">
+  <div style="padding:28px 0 0;display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap">
+    <div>
+      <div class="eyebrow" id="deskKicker"></div>
+      <h2 style="font-size:24px" id="deskTitle"></h2>
+      <p class="lead" style="margin-top:6px;font-size:13.5px" id="deskIntro"></p>
+    </div>
+    <div style="font-size:13px;color:var(--dim);text-align:right">
+      Resueltos <b id="deskProg" style="color:var(--pri)">0/0</b>
+    </div>
+  </div>
+  <div class="desk">
+    <div>
+      <div class="card sheet" id="sheet"></div>
+      <div id="verdictBox" aria-live="polite"></div>
+    </div>
+    <aside class="panel-side" id="side"></aside>
+  </div>
+</section>
+
+<!-- ============ MÓDULO 3 ============ -->
+<section class="screen" id="scr-tools">
+  <div style="padding:28px 0 0">
+    <div class="eyebrow" id="toolKicker">Módulo 3 · La herramienta correcta</div>
+    <h2 style="font-size:24px">No todas las IA son iguales</h2>
+    <p class="lead" style="margin-top:6px;font-size:13.5px">Dónde escribes importa tanto como qué escribes.
+      Cuatro situaciones cotidianas.</p>
+  </div>
+  <div class="card stage" id="toolStage"></div>
+</section>
+
+<!-- ============ INFORME ============ -->
+<section class="screen" id="scr-report">
+  <div id="reportBody"></div>
+</section>
+
+</div>
+<div id="toasts" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+
+/* =====================================================================
+   PORTAPAPELES · Uso seguro de la IA en el trabajo
+   Simulacro educativo. Todo el contenido es ficticio.
+   Licencia MIT.
+   ===================================================================== */
+
+/* ---------------------------------------------------------------
+   0. CONFIGURACIÓN DE MARCA
+   --------------------------------------------------------------- */
+const LOGO_COLORS = { marco:"#1d6b5f", marco2:"#8aa8a2", letras:"#6E7D7D" };
+
+function logoSvg(){
+  const c = LOGO_COLORS, ini = (CONFIG.empresa.trim().charAt(0) || "E").toUpperCase();
+  return '<svg viewBox="0 0 200 152" role="img" aria-label="Logotipo de ' + CONFIG.empresa + '">'
+    + "<title>" + CONFIG.empresa + "</title>"
+    + '<rect x="10" y="10" width="180" height="132" rx="14" fill="none" stroke="' + c.marco + '" stroke-width="9"/>'
+    + '<rect x="62" y="2" width="76" height="26" rx="9" fill="' + c.marco2 + '"/>'
+    + '<text x="100" y="108" text-anchor="middle" font-family="Segoe UI,system-ui,Arial,sans-serif"'
+    + ' font-size="78" font-weight="700" fill="' + c.letras + '">' + ini + "</text>"
+    + "</svg>";
+}
+
+const CONFIG = {
+  empresa:  "Tu empresa",
+  logoUrl:  "",
+  color:    "#1d6b5f",
+  colorOsc: "#14524a",
+  contacto: "la extensión 300",
+  asunto:   "Consulta sobre uso de IA",
+  herramienta: "el asistente corporativo",   // nombre de la IA aprobada internamente
+  duracion: "22 minutos"
+};
+
+function contactoHTML(){
+  const c = String(CONFIG.contacto).trim();
+  if(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c)){
+    return '<a href="mailto:' + c + "?subject=" + encodeURIComponent(CONFIG.asunto || "") + '">' + c + "</a>";
+  }
+  return esc(c);
+}
+
+function applyConfig(){
+  const r = document.documentElement.style;
+  r.setProperty("--pri", CONFIG.color);
+  r.setProperty("--pri-2", CONFIG.colorOsc);
+  if(/^#[0-9a-f]{6}$/i.test(CONFIG.color)){
+    r.setProperty("--pri-soft", CONFIG.color + "16");
+    r.setProperty("--pri-glow", CONFIG.color + "3a");
+  }
+  document.getElementById("brandName").textContent = CONFIG.empresa;
+  document.getElementById("pieEmpresa").textContent = CONFIG.empresa;
+  document.getElementById("pieContacto").innerHTML = contactoHTML();
+  const cab = document.getElementById("brandLogo"), pie = document.getElementById("pieLogo");
+  if(CONFIG.logoUrl){
+    [cab, pie].forEach(el => {
+      el.innerHTML = "";
+      const img = document.createElement("img");
+      img.src = CONFIG.logoUrl;
+      img.alt = el === pie ? "Logotipo de " + CONFIG.empresa : "";
+      el.appendChild(img);
+    });
+  }else{
+    cab.innerHTML = logoSvg();
+    pie.innerHTML = logoSvg();
+  }
+}
+
+/* ---------------------------------------------------------------
+   1. ESTADO
+   --------------------------------------------------------------- */
+const S = {
+  name: "", xp: 0, prot: 100, badges: new Set(), sound: true, riesgos: {},
+  paste:  { done:false, i:0, hits:0, leaks:0, over:0, noia:0, noiaMal:0, resueltos:{} },
+  check:  { done:false, i:0, hits:0, leaks:0, over:0, resueltos:{} },
+  tools:  { done:false, i:0, score:0, max:0, perfect:true }
+};
+const LVL_STEP = 120;
+const ROUND = { docs: [], checks: [], tools: [], seed: null, full: false };
+const PICK_DOCS = 4, PICK_CHECKS = 3;
+
+/* @DATA:START — todo lo que hay entre estos dos marcadores lo extrae y
+   valida tools/validate.mjs en cada push. No los borres al editar.
+
+   Los documentos se descomponen en segmentos. Un segmento con s:true
+   contiene algo que no debe salir de la empresa (módulo 1) o una
+   afirmación que hay que verificar (módulo 2); el resto son seguros
+   y taparlos penaliza. El segmento "¶" es un salto de párrafo. */
+
+const DOCS = [
+{
+  id:"d1", noIA:false,
+  titulo:"Queja de un cliente",
+  origen:"Correo recibido esta mañana",
+  tarea:"Quieres que la IA te resuma la queja y te prepare un borrador de respuesta.",
+  segs:[
+    {t:"Estimados señores:"}, {t:"¶"},
+    {t:"Les escribo porque el suministro que recibimos el pasado 14 de julio llegó con dos de las tres cajas rotas y el material del interior mojado. Es la segunda vez que ocurre este trimestre y necesitamos una solución antes del cierre de mes."}, {t:"¶"},
+    {t:"Mis datos para que puedan localizar el expediente: "},
+    {t:"Marta Vidal Company", s:true, w:"Nombre y apellidos de una persona identificable. Es el dato que convierte todo lo demás en información personal."},
+    {t:", "},
+    {t:"Comercial Vidal e Hijos S.L.", s:true, w:"La razón social identifica al cliente y, con ella, toda la queja deja de ser anónima."},
+    {t:", CIF "},
+    {t:"B-96 448 210", s:true, w:"Un identificador fiscal es un dato directo de la empresa cliente."},
+    {t:". Teléfono "},
+    {t:"665 40 12 88", s:true, w:"Dato de contacto personal."},
+    {t:" y dirección "},
+    {t:"Camí de la Font 44, 12530 Borriana", s:true, w:"Dirección postal: dato personal y localizable."},
+    {t:"."}, {t:"¶"},
+    {t:"Quedo a la espera de su respuesta."}
+  ],
+  why:"Para redactar la respuesta, la IA necesita entender el problema, no saber quién lo tiene. Fíjate en lo que has conservado: las cajas rotas, el material mojado, la reincidencia y la urgencia. Con eso basta para un borrador excelente. El nombre, el CIF, el teléfono y la dirección no aportan nada a la redacción y sí convierten la consulta en una cesión de datos personales a un tercero."
+},
+{
+  id:"d2", noIA:true,
+  titulo:"Resumen de nóminas de julio",
+  origen:"Hoja que te ha pasado administración",
+  tarea:"Quieres que la IA sume el total y te avise de posibles errores.",
+  segs:[
+    {t:"Resumen de nóminas · julio 2026 · pendiente de revisión"}, {t:"¶"},
+    {t:"Ana Belén Sanchis Roig — 2.140,00 € — IRPF 18%", s:true, w:"Retribución de una compañera: dato personal de los más sensibles que maneja una empresa."},
+    {t:" · "},
+    {t:"Jordi Palau Ferrer — 1.985,50 € — IRPF 16%", s:true, w:"Igual que el anterior. Además, unido al nombre permite deducir situación familiar y personal."},
+    {t:" · "},
+    {t:"Rocío Ibáñez Marco — 2.410,75 € — IRPF 21% — embargo judicial 12%", s:true, w:"Aquí ya no es solo el salario: un embargo judicial revela información de la esfera privada de una persona."},
+    {t:"¶"},
+    {t:"Comprobar diferencias con junio antes de enviar al gestor."}
+  ],
+  why:"Este documento no va a la IA, ni tapado. Aunque ocultes los nombres, los importes y las retenciones siguen siendo información retributiva de compañeros concretos, y una hoja de cálculo suma mejor que un modelo de lenguaje. La pregunta útil no es «¿qué tapo?» sino «¿esta tarea necesita una IA?». Sumar una columna, no."
+},
+{
+  id:"d3", noIA:false,
+  titulo:"Currículum de un candidato",
+  origen:"Proceso de selección abierto",
+  tarea:"Quieres que la IA te resuma la experiencia del candidato para la reunión de mañana.",
+  segs:[
+    {t:"Currículum · "},
+    {t:"Sergio Almenar Beltrán", s:true, w:"Nombre de un candidato: una persona que no ha autorizado que sus datos se envíen a una herramienta externa."},
+    {t:" · "},
+    {t:"nacido el 3 de marzo de 1991", s:true, w:"La fecha de nacimiento permite identificar y además abre la puerta a un sesgo por edad que no quieres en un proceso de selección."},
+    {t:" · "},
+    {t:"s.almenar91@correo.example", s:true, w:"Dato de contacto personal."},
+    {t:" · "},
+    {t:"612 33 09 71", s:true, w:"Dato de contacto personal."},
+    {t:"¶"},
+    {t:"Ocho años en mantenimiento industrial, los cuatro últimos coordinando un equipo de seis personas. Certificación en prevención de riesgos y experiencia en gestión de subcontratas. Nivel alto de inglés técnico."}, {t:"¶"},
+    {t:"Disponibilidad inmediata y carné B."}
+  ],
+  why:"El currículum de un candidato son datos personales de alguien ajeno a la empresa, y esa persona no ha dado su consentimiento para que acaben en una herramienta externa. Lo interesante es que, una vez tapada la identidad, el resumen sigue siendo perfectamente útil: ocho años de experiencia, coordinación de equipo, certificaciones. Eso es lo que vas a comentar mañana, no su fecha de nacimiento."
+},
+{
+  id:"d4", noIA:false,
+  titulo:"Texto para la web",
+  origen:"Borrador de marketing",
+  tarea:"Quieres que la IA mejore la redacción para publicarlo en la página de servicios.",
+  segs:[
+    {t:"Ofrecemos servicios integrales de mantenimiento para instalaciones industriales y comunidades de propietarios."}, {t:"¶"},
+    {t:"Nuestro equipo se encarga tanto del mantenimiento preventivo como de las urgencias, con atención continuada y tiempos de respuesta ajustados a cada contrato. Trabajamos en toda la provincia y adaptamos el plan de trabajo a la actividad de cada cliente para reducir al mínimo las paradas."}, {t:"¶"},
+    {t:"Contacte con nosotros y le preparamos una propuesta sin compromiso."}
+  ],
+  why:"Aquí no había nada que tapar y enviarlo entero era lo correcto. Este caso importa tanto como los anteriores: si por precaución tapas todo lo que se te pone por delante, la IA deja de poder ayudarte y acabas no usándola o, peor, usándola a escondidas. El objetivo no es esconder, es distinguir."
+},
+{
+  id:"d5", noIA:false,
+  titulo:"Aviso de alta de usuario",
+  origen:"Correo interno de sistemas",
+  tarea:"Quieres que la IA lo traduzca al inglés para un compañero de la filial.",
+  segs:[
+    {t:"Hola, ya tienes creado el acceso al portal de partes de trabajo."}, {t:"¶"},
+    {t:"Usuario: "},
+    {t:"s.almenar", s:true, w:"Un nombre de usuario es la mitad de unas credenciales y sirve para preparar ataques dirigidos."},
+    {t:" · Contraseña temporal: "},
+    {t:"Nordvia2026!", s:true, w:"Una contraseña, aunque sea temporal, no se pega jamás en ninguna herramienta. Nunca."},
+    {t:"¶"},
+    {t:"Dirección interna del portal: "},
+    {t:"https://partes.nordvia.local/acceso", s:true, w:"Revela infraestructura interna: nombres de servidores y sistemas que no tienen por qué conocerse fuera."},
+    {t:"¶"},
+    {t:"Cambia la contraseña en el primer inicio de sesión y no la compartas con nadie."}
+  ],
+  why:"Las credenciales no se pegan en ninguna parte, y menos en una herramienta que guarda el historial de conversaciones. Fíjate en algo más: una vez tapado lo sensible, lo que queda para traducir son dos frases genéricas. Cuando al limpiar un texto te das cuenta de que ya no queda nada que valga la pena, la señal es clara: esa tarea no necesitaba una IA."
+},
+{
+  id:"d6", noIA:false,
+  titulo:"Cláusula de un contrato",
+  origen:"Contrato de mantenimiento en revisión",
+  tarea:"Quieres que la IA te explique la cláusula en lenguaje sencillo antes de la reunión.",
+  segs:[
+    {t:"Cláusula séptima · Revisión de precios. Contrato suscrito con "},
+    {t:"Talvera Proyectos S.A.", s:true, w:"Identifica al cliente y, con él, sus condiciones comerciales concretas."},
+    {t:"¶"},
+    {t:"El importe se actualizará anualmente conforme a la variación del índice de precios de consumo publicado en diciembre, con un incremento máximo del tres por ciento anual. La parte contratante podrá solicitar la revisión extraordinaria de las tarifas si el volumen de intervenciones supera en un veinte por ciento lo previsto en el anexo II."}, {t:"¶"},
+    {t:"Importe anual vigente: "},
+    {t:"84.500 € + IVA", s:true, w:"Las condiciones económicas pactadas con un cliente son información confidencial de la empresa."},
+    {t:". Cuenta de domiciliación "},
+    {t:"ES21 0049 1500 0512 3456 7891", s:true, w:"Un número de cuenta bancaria no tiene ninguna función en una explicación de texto."},
+    {t:"."}
+  ],
+  why:"Se puede pedir ayuda con la forma sin entregar el fondo. La cláusula, sin el nombre del cliente ni las cifras, sigue siendo perfectamente explicable: revisión anual por IPC, tope del tres por ciento y revisión extraordinaria por exceso de intervenciones. Has obtenido la explicación que necesitabas sin revelar con quién ni por cuánto trabajáis."
+}
+];
+
+/* ---------------------------------------------------------------
+   3. MÓDULO 2 · RESPUESTAS DE LA IA PARA VERIFICAR
+   Aquí s:true marca lo que hay que comprobar antes de usarlo.
+   --------------------------------------------------------------- */
+const CHECKS = [
+{
+  id:"c1",
+  titulo:"Respuesta a la reclamación de un cliente",
+  pedido:"Le pediste: «redacta una respuesta a un cliente que reclama por una entrega dañada, citando la normativa aplicable».",
+  segs:[
+    {t:"Estimado cliente: lamentamos los daños sufridos en su pedido y procedemos a tramitar la sustitución del material."}, {t:"¶"},
+    {t:"Conforme al artículo 47.3 de la Ley de Ordenación del Comercio Minorista,", s:true, w:"Cita legal concreta. Los modelos de lenguaje generan referencias con formato perfecto y contenido inventado: el número de artículo puede no existir o decir algo distinto. Nunca cites una norma que no hayas mirado."},
+    {t:" disponemos de un plazo para la reposición del producto."}, {t:"¶"},
+    {t:"El plazo legal de sustitución es de 14 días naturales desde la comunicación,", s:true, w:"Un plazo concreto es un compromiso jurídico. Si es incorrecto, la empresa queda obligada por escrito a algo que no le corresponde, o incumple sin saberlo."},
+    {t:" por lo que recibirá el nuevo envío dentro de ese periodo."}, {t:"¶"},
+    {t:"Le confirmamos además que este incidente no volverá a producirse.", s:true, w:"Una promesa absoluta que nadie puede garantizar. La IA escribe con seguridad porque su estilo es seguro, no porque el hecho lo sea."},
+    {t:" Quedamos a su disposición."}
+  ],
+  why:"El texto está bien escrito, y ese es justamente el problema: suena tan profesional que invita a enviarlo tal cual. Las tres marcas son de tipos distintos —una norma citada, un plazo comprometido y una promesa imposible— y las tres pueden acabar en una reclamación. La redacción se puede delegar; la responsabilidad de lo que se afirma, no."
+},
+{
+  id:"c2",
+  titulo:"Resumen de un contrato de proveedor",
+  pedido:"Le pediste: «resume las obligaciones principales de este contrato de mantenimiento».",
+  segs:[
+    {t:"El contrato establece un servicio de mantenimiento preventivo con revisiones trimestrales y atención de urgencias en horario laboral."}, {t:"¶"},
+    {t:"Incluye una penalización del 5% de la factura mensual por cada incidencia no atendida en plazo.", s:true, w:"Una cláusula concreta que hay que localizar en el documento original. Los resúmenes automáticos tienden a completar lo que «suele haber» en contratos parecidos aunque no esté en este."},
+    {t:"¶"},
+    {t:"La duración es anual con prórroga tácita salvo denuncia con dos meses de antelación."}, {t:"¶"},
+    {t:"El proveedor asume la responsabilidad civil por daños hasta un límite de 600.000 €.", s:true, w:"Una cifra de cobertura es de las cosas más fáciles de confundir en un resumen y de las que peores consecuencias tiene darlas por buenas."}
+  ],
+  why:"Un resumen automático es un buen punto de partida y un pésimo punto final. Lo que hay que verificar no es todo el texto, sino lo que compromete: penalizaciones, importes, plazos y límites de responsabilidad. Todo eso se contrasta abriendo el contrato y buscando la cláusula, que son dos minutos."
+},
+{
+  id:"c3",
+  titulo:"Datos para una propuesta comercial",
+  pedido:"Le pediste: «dame algún dato del sector que refuerce la propuesta».",
+  segs:[
+    {t:"El mantenimiento preventivo reduce las paradas no planificadas y alarga la vida útil de las instalaciones."}, {t:"¶"},
+    {t:"Según el informe de 2025 del Observatorio Español de Mantenimiento Industrial,", s:true, w:"Fuente con nombre verosímil. Comprueba que la organización existe y que el informe es real antes de ponerlo en una propuesta con tu firma."},
+    {t:" "},
+    {t:"las empresas que aplican planes preventivos reducen sus costes de reparación un 43%.", s:true, w:"Cifra concreta atribuida a esa fuente. Un porcentaje inventado en una propuesta comercial es un problema de credibilidad si el cliente lo busca, y de honestidad si no lo busca."},
+    {t:"¶"},
+    {t:"Conviene acompañar la propuesta de ejemplos de intervenciones realizadas y de los tiempos de respuesta comprometidos."}
+  ],
+  why:"Las cifras con fuente son lo más peligroso que produce una IA, porque son exactamente lo que buscabas y llegan con el envoltorio de credibilidad puesto. La regla práctica: si un dato es lo bastante bueno como para ponerlo en una propuesta, es lo bastante importante como para buscar la fuente original."
+},
+{
+  id:"c4",
+  titulo:"Correo de convocatoria de reunión",
+  pedido:"Le pediste: «escribe un correo convocando al equipo a la reunión de seguimiento del jueves».",
+  segs:[
+    {t:"Hola a todos:"}, {t:"¶"},
+    {t:"Os convoco a la reunión de seguimiento del proyecto el jueves a las 10:00 en la sala grande. La previsión es que dure una hora."}, {t:"¶"},
+    {t:"Repasaremos el estado de las intervenciones pendientes, las incidencias de las últimas semanas y la planificación del mes que viene. Si tenéis algún punto que añadir al orden del día, decídmelo antes del miércoles."}, {t:"¶"},
+    {t:"Gracias y hasta el jueves."}
+  ],
+  why:"Aquí no había nada que marcar, y reconocerlo también forma parte del criterio. Este correo no afirma hechos verificables, no cita normas ni cifras y no compromete a nada: solo organiza. La desconfianza tiene que ser selectiva, porque marcarlo todo cuesta el mismo tiempo que redactarlo a mano y acaba con que nadie revisa nada."
+}
+];
+
+/* ---------------------------------------------------------------
+   4. MÓDULO 3 · ELECCIÓN DE HERRAMIENTA
+   --------------------------------------------------------------- */
+const TOOLS = [
+{
+  id:"t1",
+  titulo:"La extensión que resume páginas",
+  situacion:"Un compañero te pasa el enlace de una extensión de navegador que resume cualquier página web con un clic. Al instalarla, el navegador avisa: «Esta extensión podrá leer y modificar todos tus datos en todos los sitios web que visites».",
+  opts:[
+    {t:"Instalarla: ese aviso sale en casi todas las extensiones.", v:-25, k:"bad",
+     fb:"Ese permiso significa literalmente que la extensión puede leer el correo corporativo, el ERP, la banca electrónica y cualquier panel al que entres, aunque tú no le pidas nada. Que sea un aviso frecuente no lo hace menor: lo hace normalizado."},
+    {t:"Instalarla solo en el navegador personal y usarla ahí para lo del trabajo.", v:-15, k:"mid",
+     fb:"Has movido el problema, no lo has resuelto: el trabajo acaba pasando por un navegador sin controles de la empresa. Además, mezclar el equipo personal con documentos corporativos complica cualquier investigación posterior."},
+    {t:"No instalarla y preguntar a IT si hay una herramienta aprobada para eso.", v:30, k:"good",
+     fb:"Correcto. Y la segunda parte importa tanto como la primera: si la necesidad es real y no ofreces alternativa, la gente la instala igual pero sin contarlo."}
+  ],
+  why:"Las extensiones de IA son hoy una de las vías de fuga más discretas que existen, porque el permiso que piden es enorme y el usuario lo concede en dos segundos para conseguir una función pequeña."
+},
+{
+  id:"t2",
+  titulo:"La web gratuita que traduce contratos",
+  situacion:"Necesitas traducir un contrato con un cliente. Un buscador te ofrece una web gratuita que traduce documentos enteros. En sus condiciones de uso, en el apartado octavo, dice que los archivos subidos pueden emplearse para mejorar sus modelos.",
+  opts:[
+    {t:"Subirlo: es una traducción, no se lo estoy dando a nadie.", v:-30, k:"bad",
+     fb:"Sí se lo estás dando a alguien. «Mejorar sus modelos» significa que el contenido del contrato se incorpora a su sistema y puede aflorar en respuestas a otros usuarios. Un contrato con un cliente no es tuyo para cederlo."},
+    {t:"Subirlo pero cambiando antes el nombre del cliente.", v:-10, k:"mid",
+     fb:"Mejor que nada, pero un contrato es reconocible por su contenido: importes, plazos, alcance del servicio. Y la cesión de uso de las condiciones sigue aplicándose igual."},
+    {t:"Usar la herramienta aprobada por la empresa, aunque sea menos cómoda.", v:30, k:"good",
+     fb:"Exacto. La diferencia entre una herramienta corporativa y una gratuita no suele estar en la calidad de la traducción, sino en el contrato que hay detrás: quién puede usar tus datos y durante cuánto tiempo."}
+  ],
+  why:"Lo gratuito se paga con datos. No es una metáfora: está escrito en las condiciones de uso, que es justo lo que nadie lee."
+},
+{
+  id:"t3",
+  titulo:"La cuenta personal a las ocho de la tarde",
+  situacion:"Tienes que entregar mañana un informe y la herramienta corporativa va lenta. Tu cuenta personal de una IA muy conocida funciona perfectamente y la tienes abierta en el móvil.",
+  opts:[
+    {t:"Usar la cuenta personal solo esta vez, que corre prisa.", v:-25, k:"bad",
+     fb:"«Solo esta vez» es como empieza el noventa por ciento de la IA en la sombra. El material corporativo queda en un historial que la empresa no controla, asociado a tu cuenta personal, y si mañana hay que investigar algo no existe registro alguno."},
+    {t:"Trabajar sin IA esta vez y avisar de que la herramienta va lenta.", v:30, k:"good",
+     fb:"Correcto, y el aviso es la parte útil: si nadie reporta que la herramienta aprobada funciona mal, nadie la arregla y todo el mundo acaba usando la suya por su cuenta."},
+    {t:"Usar la cuenta personal pero borrar la conversación al terminar.", v:-20, k:"bad",
+     fb:"Borrar la conversación de tu pantalla no borra lo que ya se ha procesado ni lo que se haya conservado en registros. Además, si algo sale mal, ahora tampoco queda rastro de qué se envió."}
+  ],
+  why:"La IA en la sombra no aparece por rebeldía, aparece por fricción. Cada vez que la herramienta aprobada es peor que la alternativa, alguien toma el atajo."
+},
+{
+  id:"t4",
+  titulo:"El informe que ha escrito la IA",
+  situacion:"Has redactado con ayuda de la IA un informe técnico que firma tu departamento y se envía a un cliente. El texto es bueno y lo has revisado.",
+  opts:[
+    {t:"Enviarlo como cualquier otro informe: lo has revisado y respondes de su contenido.", v:25, k:"good",
+     fb:"Razonable. Usar la IA como herramienta de redacción no obliga a declararlo, igual que no se declara el corrector ortográfico. Lo que sí es innegociable es lo que has hecho: revisarlo y asumir tú lo que afirma."},
+    {t:"Enviarlo sin revisar del todo: la IA rara vez se equivoca en textos técnicos.", v:-30, k:"bad",
+     fb:"El informe lo firma tu departamento, no la herramienta. Si contiene un dato inventado, quien responde ante el cliente eres tú, y «lo escribió la IA» no es una defensa ante nadie."},
+    {t:"Avisar al cliente de que parte del texto lo ha generado una IA.", v:10, k:"mid",
+     fb:"No está mal y en algunos contextos es buena práctica, pero cuidado con usarlo como forma de repartir la responsabilidad. Avisar no sustituye a revisar."}
+  ],
+  why:"La cuestión de fondo no es si se usa IA, sino quién responde del resultado. La respuesta es siempre la misma: quien firma."
+}
+];
+
+/* ---------------------------------------------------------------
+   CATEGORÍAS DE RIESGO
+   --------------------------------------------------------------- */
+const RIESGOS = {
+  personales:  {n:"Datos personales", d:"Información de clientes, compañeros o candidatos entregada a un tercero sin base para ello."},
+  confidencial:{n:"Información confidencial", d:"Condiciones comerciales, contratos y documentos internos que salen de la organización."},
+  inventado:   {n:"Información inventada", d:"Datos, normas o cifras generadas por la IA que se dan por buenas sin comprobar."},
+  sombra:      {n:"IA en la sombra", d:"Uso de herramientas no aprobadas, cuentas personales o extensiones sin control."},
+  credenciales:{n:"Credenciales y accesos", d:"Usuarios, contraseñas y direcciones internas expuestos fuera de la empresa."}
+};
+
+const RIESGO_MAP = {
+  d1:["personales"],
+  d2:["personales","confidencial"],
+  d3:["personales"],
+  d5:["credenciales"],
+  d6:["confidencial"],
+  c1:["inventado"],
+  c2:["inventado","confidencial"],
+  c3:["inventado"],
+  t1:["sombra","confidencial"],
+  t2:["sombra","confidencial"],
+  t3:["sombra"],
+  t4:["inventado"]
+};
+
+/* ---------------------------------------------------------------
+   LOGROS
+   --------------------------------------------------------------- */
+const BADGES = [
+  {id:"limpio",  ic:"🛡️", n:"Sin fugas",        d:"No dejaste salir ningún dato sensible."},
+  {id:"justo",   ic:"⚖️", n:"Mano justa",       d:"No tapaste nada que no hiciera falta."},
+  {id:"freno",   ic:"🛑", n:"Freno a tiempo",   d:"Reconociste la tarea que no debía ir a la IA."},
+  {id:"radar",   ic:"📡", n:"Radar de bulos",   d:"Marcaste todo lo que había que verificar."},
+  {id:"criterio",ic:"🎯", n:"Criterio fino",    d:"Reconociste la respuesta correcta sin marcarla de más."},
+  {id:"tools",   ic:"🧰", n:"Buena elección",   d:"Acertaste las cuatro decisiones de herramienta."},
+  {id:"perfecto",ic:"💎", n:"Impecable",        d:"Terminaste con el 100 % de la información protegida."}
+];
+/* @DATA:END */
+
+/* ---------------------------------------------------------------
+   5. UTILIDADES
+   --------------------------------------------------------------- */
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+
+let AC = null;
+function beep(freq, dur, type){
+  if(!S.sound) return;
+  try{
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type = type || "sine"; o.frequency.value = freq;
+    g.gain.setValueAtTime(.0001, AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(.06, AC.currentTime + .01);
+    g.gain.exponentialRampToValueAtTime(.0001, AC.currentTime + dur);
+    o.connect(g); g.connect(AC.destination);
+    o.start(); o.stop(AC.currentTime + dur + .02);
+  }catch(e){/* audio no disponible */}
+}
+const sfx = {
+  ok:   () => { beep(660,.09,"triangle"); setTimeout(()=>beep(990,.13,"triangle"),90); },
+  bad:  () => { beep(220,.15,"sine"); setTimeout(()=>beep(160,.22,"sine"),110); },
+  tap:  () => beep(520,.03,"sine"),
+  badge:() => { [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.12,"triangle"), i*95)); }
+};
+
+function toast(msg, kind){
+  const el = document.createElement("div");
+  el.className = "toast" + (kind ? " " + kind : "");
+  el.textContent = msg;
+  $("#toasts").appendChild(el);
+  setTimeout(()=>{ el.style.transition=".4s"; el.style.opacity="0"; el.style.transform="translateX(30px)"; }, 2600);
+  setTimeout(()=>el.remove(), 3100);
+}
+
+function addXP(n){ if(n <= 0) return; S.xp += n; toast("+" + n + " puntos"); renderHUD(); }
+function addProt(n){ S.prot = Math.max(0, Math.min(100, S.prot + n)); renderHUD(); }
+function grant(id){
+  if(S.badges.has(id)) return;
+  const b = BADGES.find(x => x.id === id);
+  if(!b) return;
+  S.badges.add(id); sfx.badge();
+  toast("Logro desbloqueado: " + b.n, "gold");
+}
+
+function renderHUD(){
+  $("#hAgent").textContent = S.name || "—";
+  $("#hXp").textContent = S.xp;
+  $("#hXpBar").style.width = ((S.xp % LVL_STEP) / LVL_STEP * 100) + "%";
+  $("#hLeakN").textContent = S.prot;
+  $("#hLeakBar").style.width = S.prot + "%";
+  const w = $("#hLeakWrap");
+  w.setAttribute("aria-valuenow", S.prot);
+  w.classList.toggle("warn", S.prot < 75 && S.prot >= 45);
+  w.classList.toggle("crit", S.prot < 45);
+}
+
+function show(id){
+  $$(".screen").forEach(s => s.classList.remove("on"));
+  $("#scr-" + id).classList.add("on");
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+/* ---- Sorteo reproducible ---- */
+function mulberry32(a){
+  return function(){
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function hashStr(s){
+  let h = 2166136261;
+  for(let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+let RND = Math.random;
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(RND() * (i + 1));
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+/* El sorteo garantiza la mezcla pedagógica: siempre entra un documento
+   que no debe ir a la IA y otro que no tiene nada que tapar. Sin esa
+   garantía, una partida podría enseñar solo la mitad de la lección. */
+function drawRound(){
+  const q = new URLSearchParams(location.search);
+  ROUND.seed = q.get("seed");
+  ROUND.full = q.get("all") === "1";
+  RND = ROUND.seed ? mulberry32(hashStr(ROUND.seed)) : Math.random;
+
+  if(ROUND.full){
+    ROUND.docs = shuffle(DOCS);
+    ROUND.checks = shuffle(CHECKS);
+  }else{
+    const noia   = shuffle(DOCS.filter(d => d.noIA));
+    const limpio = shuffle(DOCS.filter(d => !d.noIA && !d.segs.some(s => s.s)));
+    const resto  = shuffle(DOCS.filter(d => !d.noIA && d.segs.some(s => s.s)));
+    const sel = [noia[0], limpio[0]].filter(Boolean);
+    while(sel.length < PICK_DOCS && resto.length) sel.push(resto.shift());
+    ROUND.docs = shuffle(sel);
+
+    const limpias = shuffle(CHECKS.filter(c => !c.segs.some(s => s.s)));
+    const conErr  = shuffle(CHECKS.filter(c => c.segs.some(s => s.s)));
+    const selc = [limpias[0]].filter(Boolean);
+    while(selc.length < PICK_CHECKS && conErr.length) selc.push(conErr.shift());
+    ROUND.checks = shuffle(selc);
+  }
+  ROUND.tools = shuffle(TOOLS);
+}
+
+/* ---- Cobertura de categorías de riesgo ---- */
+function markRiesgo(id, ok){
+  (RIESGO_MAP[id] || []).forEach(r => {
+    if(!S.riesgos[r]) S.riesgos[r] = {seen:0, ok:0};
+    S.riesgos[r].seen++;
+    if(ok) S.riesgos[r].ok++;
+  });
+}
+function chipsRiesgo(id){
+  const ids = RIESGO_MAP[id] || [];
+  if(!ids.length) return "";
+  return '<div class="riesgos"><span class="rlab">Riesgo</span>'
+    + ids.map(r => '<span class="chip">' + esc(RIESGOS[r] ? RIESGOS[r].n : r) + "</span>").join("")
+    + "</div>";
+}
+
+/* ---------------------------------------------------------------
+   6. ARRANQUE
+   --------------------------------------------------------------- */
+applyConfig();
+$("#btnStart").addEventListener("click", start);
+$("#inName").addEventListener("keydown", e => { if(e.key === "Enter") start(); });
+function start(){
+  S.name = $("#inName").value.trim() || "Participante";
+  sfx.ok();
+  drawRound();
+  ["hudPart","hudPts","hudLeak","btnHub"].forEach(id => $("#" + id).hidden = false);
+  renderHUD();
+  renderHub();
+  show("hub");
+}
+$("#btnHub").addEventListener("click", () => { if(S.name){ renderHub(); show("hub"); } });
+$("#btnSound").addEventListener("click", e => {
+  S.sound = !S.sound;
+  e.target.textContent = S.sound ? "Sonido activado" : "Sonido desactivado";
+  e.target.setAttribute("aria-pressed", S.sound ? "true" : "false");
+  if(S.sound) sfx.tap();
+});
+
+/* ---------------------------------------------------------------
+   7. INICIO
+   --------------------------------------------------------------- */
+const MODULES = [
+  {k:"paste", ic:"📋", t:"1 · Antes de pegar",
+   d:"Cuatro documentos de trabajo. Toca el texto para tapar lo que no debe salir de la empresa y envíalo a la IA. Taparlo todo también cuenta como error."},
+  {k:"check", ic:"🔍", t:"2 · Antes de usar",
+   d:"Tres respuestas de la IA. Marca las afirmaciones que hay que comprobar antes de dárselas a un cliente. Alguna respuesta es correcta entera."},
+  {k:"tools", ic:"🧰", t:"3 · La herramienta correcta",
+   d:"Extensiones de navegador, cuentas personales y aplicaciones gratuitas. Requiere completar los módulos anteriores."}
+];
+
+function renderHub(){
+  $("#hubName").textContent = S.name;
+  const ready = S.paste.done && S.check.done;
+  $("#hubGrid").innerHTML = MODULES.map(m => {
+    const st = S[m.k];
+    const locked = (m.k === "tools") && !ready && !st.done;
+    const estado = st.done ? "Completado" : locked ? "Bloqueado" : "Disponible";
+    return '<div class="card mod ' + (st.done ? "done" : "") + (locked ? " locked" : "") + '" data-k="' + m.k + '"'
+      + ' role="button" tabindex="0" aria-disabled="' + (locked ? "true" : "false") + '"'
+      + ' aria-label="' + esc(m.t + ". " + estado) + '">'
+      + '<div class="tag ' + (st.done ? "done" : locked ? "lock" : "live") + '">' + estado + "</div>"
+      + '<div class="ic" aria-hidden="true">' + m.ic + '</div><h3>' + m.t + '</h3><p>' + m.d + '</p></div>';
+  }).join("");
+
+  $$("#hubGrid .mod").forEach(el => {
+    const go = () => {
+      if(el.classList.contains("locked")){ sfx.bad(); toast("Completa antes los módulos 1 y 2", "bad"); return; }
+      const k = el.dataset.k;
+      if(S[k].done){ toast("Ya has completado este módulo", "gold"); return; }
+      sfx.tap();
+      if(k === "paste") openDesk("paste", 0);
+      if(k === "check") openDesk("check", 0);
+      if(k === "tools") openTools(0);
+    };
+    el.addEventListener("click", go);
+    el.addEventListener("keydown", ev => { if(ev.key === "Enter" || ev.key === " "){ ev.preventDefault(); go(); } });
+  });
+
+  const all = S.paste.done && S.check.done && S.tools.done;
+  $("#hubFinal").innerHTML = all
+    ? '<button class="btn" id="btnReport">Ver mi informe</button>'
+    : '<p style="color:var(--dim);font-size:13px">Completa los tres módulos para ver tu informe.</p>';
+  if(all) $("#btnReport").addEventListener("click", () => { sfx.ok(); renderReport(); show("report"); });
+}
+
+/* ---------------------------------------------------------------
+   8. MOTOR DE SEGMENTOS · lo comparten los módulos 1 y 2
+   En el módulo 1 tocar un segmento lo tapa; en el 2 lo marca para
+   verificar. La lógica de puntuación es la misma: aciertos, lo que
+   se escapa y lo que sobra. Un solo componente, dos ejercicios.
+   --------------------------------------------------------------- */
+let D = null;   // {mode, idx, item, sel:Set, resuelto:bool}
+
+const MODE = {
+  paste: {
+    lista: () => ROUND.docs,
+    est: () => S.paste,
+    kicker: "Módulo 1 · Antes de pegar",
+    titulo: "Tú decides qué sale de la empresa",
+    intro: "Toca cualquier fragmento del documento para taparlo. Tapa lo que no debe salir y deja lo que la IA necesita para poder ayudarte.",
+    accion: "Tapar",
+    claseSel: "hid",
+    hint: "Pregúntate por cada dato: <b>¿la IA necesita esto para hacer la tarea?</b> Si la respuesta es no y además identifica a alguien, tápalo.",
+    contador: n => n + (n === 1 ? " fragmento tapado" : " fragmentos tapados")
+  },
+  check: {
+    lista: () => ROUND.checks,
+    est: () => S.check,
+    kicker: "Módulo 2 · Antes de usar",
+    titulo: "La IA ya ha respondido",
+    intro: "Toca las afirmaciones que habría que comprobar antes de dar esta respuesta por buena. Si no hay ninguna, dilo también.",
+    accion: "Marcar",
+    claseSel: "mark",
+    hint: "Marca lo que <b>compromete</b>: normas citadas, cifras, plazos y promesas. Lo que solo organiza o describe no necesita verificación.",
+    contador: n => n + (n === 1 ? " afirmación marcada" : " afirmaciones marcadas")
+  }
+};
+
+function openDesk(mode, idx){
+  const cfg = MODE[mode], lista = cfg.lista();
+  if(idx >= lista.length){ finishDesk(mode); return; }
+  D = { mode: mode, idx: idx, item: lista[idx], sel: new Set(), resuelto: false };
+  $("#deskKicker").textContent = cfg.kicker + " · " + (idx + 1) + " de " + lista.length;
+  $("#deskTitle").textContent = cfg.titulo;
+  $("#deskIntro").textContent = cfg.intro;
+  $("#deskProg").textContent = idx + "/" + lista.length;
+  $("#verdictBox").innerHTML = "";
+  renderSheet();
+  show("desk");
+}
+
+function renderSheet(){
+  const cfg = MODE[D.mode], it = D.item;
+  const cab = D.mode === "paste"
+    ? '<div class="k">' + esc(it.origen) + "</div><h3>" + esc(it.titulo) + "</h3><p>" + esc(it.tarea) + "</p>"
+    : '<div class="k">Respuesta de la IA</div><h3>' + esc(it.titulo) + "</h3><p>" + esc(it.pedido) + "</p>";
+
+  let cuerpo = "<p>", n = 0;
+  it.segs.forEach((sg, i) => {
+    if(sg.t === "¶"){ cuerpo += "</p><p>"; return; }
+    n++;
+    cuerpo += '<span class="seg" data-i="' + i + '" role="button" tabindex="0" aria-pressed="false"'
+      + ' aria-label="' + esc(cfg.accion + ": " + sg.t) + '">' + esc(sg.t) + "</span>";
+  });
+  cuerpo += "</p>";
+
+  $("#sheet").innerHTML = '<div class="sheet-h">' + cab + '</div><div class="doc" id="doc">' + cuerpo + "</div>";
+  renderSide();
+
+  $$("#doc .seg").forEach(el => {
+    const toggle = () => {
+      if(D.resuelto) return;
+      const i = parseInt(el.dataset.i, 10);
+      if(D.sel.has(i)){ D.sel.delete(i); el.classList.remove(cfg.claseSel); el.setAttribute("aria-pressed","false"); }
+      else { D.sel.add(i); el.classList.add(cfg.claseSel); el.setAttribute("aria-pressed","true"); }
+      sfx.tap();
+      renderSide();
+    };
+    el.addEventListener("click", toggle);
+    el.addEventListener("keydown", ev => {
+      if(ev.key === "Enter" || ev.key === " "){ ev.preventDefault(); toggle(); }
+    });
+  });
+}
+
+function renderSide(){
+  const cfg = MODE[D.mode];
+  if(D.resuelto){
+    $("#side").innerHTML = '<div class="card gauge"><div class="lab">Documento resuelto</div>'
+      + '<div class="note">Repasa las marcas de colores sobre el texto: en verde lo que acertaste, '
+      + 'en rojo lo que se te escapó y en ámbar lo que sobraba.</div></div>'
+      + '<div class="acts"><button class="btn" id="bNext">Siguiente</button></div>';
+    $("#bNext").addEventListener("click", () => {
+      sfx.tap();
+      openDesk(D.mode, D.idx + 1);
+    });
+    return;
+  }
+
+  const acciones = D.mode === "paste"
+    ? '<button class="btn" id="bSend">Enviar a la IA</button>'
+      + '<button class="btn sec" id="bSkip">No usar la IA para esto</button>'
+    : '<button class="btn" id="bDone">He terminado de revisar</button>';
+
+  $("#side").innerHTML =
+    '<div class="card gauge"><div class="lab">' + (D.mode === "paste" ? "Preparando el envío" : "Revisión")
+    + '</div><div class="big">' + D.sel.size + '</div>'
+    + '<div class="note">' + cfg.contador(D.sel.size) + "</div></div>"
+    + '<div class="hint">' + cfg.hint + "</div>"
+    + '<div class="acts">' + acciones + "</div>";
+
+  if($("#bSend")) $("#bSend").addEventListener("click", () => resolveDesk("send"));
+  if($("#bSkip")) $("#bSkip").addEventListener("click", () => resolveDesk("skip"));
+  if($("#bDone")) $("#bDone").addEventListener("click", () => resolveDesk("send"));
+}
+
+function resolveDesk(accion){
+  const it = D.item, est = MODE[D.mode].est();
+  D.resuelto = true;
+
+  const sensibles = [], seguros = [];
+  it.segs.forEach((sg, i) => { if(sg.t !== "¶") (sg.s ? sensibles : seguros).push(i); });
+
+  const acertados = sensibles.filter(i => D.sel.has(i));
+  const escapados = sensibles.filter(i => !D.sel.has(i));
+  const sobrantes = seguros.filter(i => D.sel.has(i));
+
+  let clase, titulo, texto;
+
+  if(D.mode === "paste" && accion === "skip"){
+    if(it.noIA){
+      clase = "good"; titulo = "Decisión correcta: esto no iba a la IA";
+      texto = "Has parado antes de empezar, que es la respuesta que buscábamos.";
+      est.noia++; addXP(35); addProt(4); grant("freno");
+      markRiesgo(it.id, true);
+    }else{
+      clase = "mid"; titulo = "Prudente, pero te has quedado corto";
+      texto = "No has filtrado nada, y eso está bien. Pero este documento sí se podía aprovechar tapando lo justo, "
+        + "y renunciar a la herramienta cada vez que aparece un dato personal acaba llevando a no usarla o a usarla a escondidas.";
+      addXP(8);
+      markRiesgo(it.id, true);
+    }
+  }else if(D.mode === "paste" && it.noIA){
+    clase = "bad"; titulo = "Esto no debía enviarse, ni tapado";
+    texto = "Aunque hubieras ocultado los nombres, la información retributiva de compañeros concretos no sale de la empresa. "
+      + "La pregunta previa a «¿qué tapo?» es «¿esta tarea necesita una IA?».";
+    est.noiaMal++; addProt(-25);
+    markRiesgo(it.id, false);
+  }else{
+    est.hits += acertados.length;
+    est.leaks += escapados.length;
+    est.over  += sobrantes.length;
+
+    const bien = escapados.length === 0 && sobrantes.length === 0;
+    clase = escapados.length ? "bad" : (sobrantes.length ? "mid" : "good");
+    if(bien){
+      titulo = D.mode === "paste" ? "Envío limpio" : "Revisión impecable";
+      texto = D.mode === "paste"
+        ? "Ni un dato de más ni un dato de menos: la IA recibe justo lo que necesita para ayudarte."
+        : "Has marcado exactamente lo que había que comprobar, sin desconfiar de lo que no lo necesitaba.";
+      addXP(30); addProt(3);
+    }else if(!escapados.length){
+      titulo = D.mode === "paste" ? "Sin fugas, pero te has pasado tapando" : "Nada se te ha escapado, pero has marcado de más";
+      texto = D.mode === "paste"
+        ? "No ha salido nada que no debiera, que es lo esencial. Pero has tapado " + sobrantes.length
+          + " fragmento(s) que la IA necesitaba, así que la respuesta que recibirías sería bastante peor."
+        : "Has marcado " + sobrantes.length + " frase(s) que no comprometían nada. Revisar de más cuesta el mismo tiempo que redactar a mano.";
+      addXP(15); addProt(-1 * sobrantes.length);
+    }else{
+      titulo = D.mode === "paste" ? "Ha salido información que no debía" : "Se te ha escapado algo que había que verificar";
+      texto = D.mode === "paste"
+        ? "Han salido " + escapados.length + " fragmento(s) sensibles hacia una herramienta externa."
+        : "Has dado por buenas " + escapados.length + " afirmación(es) que nadie ha comprobado.";
+      addProt(-6 * escapados.length - (sobrantes.length ? 1 : 0));
+      addXP(acertados.length * 6);
+    }
+    markRiesgo(it.id, escapados.length === 0);
+  }
+
+  // pintar el resultado sobre el propio texto
+  const doc = $("#doc");
+  doc.classList.add("done");
+  $$("#doc .seg").forEach(el => {
+    const i = parseInt(el.dataset.i, 10);
+    if(sensibles.includes(i)) el.classList.add(D.sel.has(i) ? "ok" : "leak");
+    else if(D.sel.has(i)) el.classList.add("over");
+  });
+
+  const detalle = []
+    .concat(escapados.map(i => ({c:"e", n:"Se escapó", t:it.segs[i].w})))
+    .concat(acertados.map(i => ({c:"b", n:"Bien", t:it.segs[i].w})))
+    .concat(sobrantes.map(i => ({c:"o", n:"Sobraba", t:"«" + it.segs[i].t.slice(0,60) + "» no compromete nada: taparlo solo reduce la calidad de la respuesta."})));
+
+  $("#verdictBox").innerHTML =
+    '<div class="verdict ' + clase + '"><h4>' + esc(titulo) + "</h4><p>" + esc(texto) + "</p>"
+    + (detalle.length ? '<ul class="flist">' + detalle.map(d =>
+        '<li><span class="nb ' + d.c + '">' + d.n + "</span><span>" + d.t + "</span></li>").join("") + "</ul>" : "")
+    + '<p style="margin-top:14px">' + esc(it.why) + "</p>"
+    + chipsRiesgo(it.id) + "</div>";
+
+  if(clase === "good") sfx.ok(); else sfx.bad();
+  est.resueltos[it.id] = true;
+  $("#deskProg").textContent = Object.keys(est.resueltos).length + "/" + MODE[D.mode].lista().length;
+  renderSide();
+  $("#verdictBox").scrollIntoView({behavior:"smooth", block:"nearest"});
+}
+
+function finishDesk(mode){
+  const est = MODE[mode].est();
+  if(est.done){ renderHub(); show("hub"); return; }
+  est.done = true;
+  if(mode === "paste"){
+    if(est.leaks === 0 && est.noiaMal === 0) grant("limpio");
+    if(est.over === 0) grant("justo");
+    toast("Módulo 1 completado", "gold");
+  }else{
+    if(est.leaks === 0) grant("radar");
+    if(est.over === 0) grant("criterio");
+    toast("Módulo 2 completado", "gold");
+  }
+  addXP(40);
+  renderHub();
+  show("hub");
+}
+
+/* ---------------------------------------------------------------
+   9. MÓDULO 3 · ELECCIÓN DE HERRAMIENTA
+   --------------------------------------------------------------- */
+let T = null;
+
+function openTools(i){
+  if(i >= ROUND.tools.length){ finishTools(); return; }
+  T = { i: i, item: ROUND.tools[i] };
+  $("#toolKicker").textContent = "Módulo 3 · La herramienta correcta · " + (i + 1) + " de " + ROUND.tools.length;
+  renderTool();
+  show("tools");
+}
+
+function renderTool(){
+  const it = T.item;
+  $("#toolStage").innerHTML =
+    '<div class="sit"><div class="k">Situación ' + (T.i + 1) + "</div><h3>" + esc(it.titulo) + "</h3>"
+    + "<p>" + esc(it.situacion) + "</p></div>"
+    + '<div class="opts" id="opts" role="group" aria-label="Opciones">'
+    + it.opts.map((o, i) => '<button class="opt" data-i="' + i + '"><span class="k">'
+        + (i + 1) + "</span>" + esc(o.t) + "</button>").join("")
+    + "</div>";
+  $$("#opts .opt").forEach(el => el.addEventListener("click", () => chooseTool(parseInt(el.dataset.i, 10))));
+}
+
+function chooseTool(i){
+  const it = T.item, o = it.opts[i];
+  S.tools.max += Math.max.apply(null, it.opts.map(x => Math.max(0, x.v)));
+  S.tools.score += Math.max(0, o.v);
+  if(o.v <= 0) S.tools.perfect = false;
+
+  if(o.v > 0){ sfx.ok(); addXP(o.v); addProt(2); }
+  else { sfx.bad(); addProt(Math.round(o.v / 3)); }
+  markRiesgo(it.id, o.v > 0);
+
+  $("#opts").innerHTML = "";
+  $("#toolStage").insertAdjacentHTML("beforeend",
+    '<div class="fb ' + o.k + '"><b>'
+    + (o.k === "good" ? "Buena decisión" : o.k === "mid" ? "A medias" : "Decisión arriesgada")
+    + "</b>" + esc(o.fb) + "</div>"
+    + '<div class="fb mid" style="background:var(--info-soft);border-left-color:var(--info);color:var(--info)"><b>Por qué importa</b>'
+    + esc(it.why) + "</div>"
+    + '<div class="opts"><button class="btn" id="bTn">'
+    + (T.i >= ROUND.tools.length - 1 ? "Terminar el módulo" : "Siguiente situación") + "</button></div>");
+  $("#bTn").addEventListener("click", () => { sfx.tap(); openTools(T.i + 1); });
+}
+
+function finishTools(){
+  if(S.tools.done){ renderHub(); show("hub"); return; }
+  S.tools.done = true;
+  if(S.tools.perfect) grant("tools");
+  addXP(40);
+  toast("Módulo 3 completado", "gold");
+  renderHub();
+  show("hub");
+}
+
+/* ---------------------------------------------------------------
+   10. INFORME
+   --------------------------------------------------------------- */
+function renderReport(){
+  if(S.prot === 100) grant("perfecto");
+
+  const p = S.paste, c = S.check;
+  const totalSens = p.hits + p.leaks;
+  const totalSensC = c.hits + c.leaks;
+  const proteccion = totalSens ? Math.round(p.hits / totalSens * 100) : 100;
+  const moderacion = Math.max(0, 100 - p.over * 12);
+  const verificacion = totalSensC ? Math.round(c.hits / totalSensC * 100) : 100;
+  const criterio = Math.max(0, 100 - c.over * 12);
+  const herramientas = S.tools.max ? Math.round(S.tools.score / S.tools.max * 100) : 0;
+  const glob = Math.round(proteccion * .3 + moderacion * .15 + verificacion * .25 + criterio * .1 + herramientas * .2);
+
+  let medal = "🌱", rank = "Margen de mejora", rtxt =
+    "Ha salido información que no debía salir, o has dado por buenas afirmaciones sin comprobar. Aquí no cuesta nada: por eso se hace en un simulacro. Vuelve a intentarlo fijándote en una sola pregunta antes de cada envío: ¿qué necesita la IA de verdad para hacer esto?";
+  if(glob >= 90){ medal = "🏆"; rank = "Excelente";
+    rtxt = "Uso ejemplar. Distingues lo que la IA necesita de lo que no debe ver, verificas lo que compromete sin desconfiar de todo, y eliges bien la herramienta. Es exactamente el equilibrio que buscamos: aprovechar la IA sin regalar información ni firmar lo que no has comprobado."; }
+  else if(glob >= 75){ medal = "👏"; rank = "Muy bien";
+    rtxt = "Buen nivel. Tienes claro el criterio general; repasa los casos concretos donde te pasaste tapando o marcando, porque el exceso de celo también tiene coste: acaba con que la herramienta no sirva o con que se use por otro lado."; }
+  else if(glob >= 55){ medal = "👀"; rank = "Vas bien, con puntos ciegos";
+    rtxt = "Reconoces lo evidente, pero algún dato se ha escapado o alguna afirmación inventada ha pasado el filtro. Suele ser el mismo patrón: cuando el texto está bien escrito, bajamos la guardia."; }
+
+  const color = v => v >= 80 ? "var(--ok)" : v >= 55 ? "var(--warn)" : "var(--err)";
+  const metric = (lab, v, note) =>
+    '<div class="metric"><div class="row"><span>' + lab + '</span><span style="color:' + color(v)
+    + ';font-weight:650">' + v + '%</span></div><div class="track"><i style="width:' + v + '%;background:'
+    + color(v) + '"></i></div><div class="note">' + note + "</div></div>";
+
+  const rids = Object.keys(S.riesgos).sort();
+  const rrows = rids.length ? rids.map(r => {
+    const d = S.riesgos[r], full = d.ok === d.seen, none = d.ok === 0;
+    const cl = full ? "ok" : none ? "ko" : "half";
+    const info = RIESGOS[r] || {n:r, d:""};
+    return '<div class="rrow ' + cl + '"><span class="rn">' + esc(info.n) + "</span>"
+      + '<span class="rv">' + (full ? "controlado" : none ? "no controlado" : "parcial")
+      + " · " + d.ok + "/" + d.seen + "</span>"
+      + '<span class="rd">' + esc(info.d) + "</span></div>";
+  }).join("") : '<p style="color:var(--dim);font-size:13px">Sin categorías registradas.</p>';
+
+  const tips = [];
+  if(p.leaks > 0) tips.push("Dejaste salir " + p.leaks + " fragmento(s) con datos sensibles. Antes de pegar, léelo una vez buscando solo tres cosas: nombres de personas, identificadores (DNI, CIF, cuentas, teléfonos) y condiciones económicas.");
+  if(p.over > 2) tips.push("Tapaste " + p.over + " fragmentos que no hacía falta ocultar. Recuerda que la IA solo puede ayudarte con lo que ve: si le quitas el contexto del problema, te devolverá un texto genérico que no sirve.");
+  if(p.noiaMal > 0) tips.push("Enviaste a la IA una tarea que no debía ir, ni tapada. Cuando el documento es una lista de personas con sus datos, la respuesta no es redactar mejor la consulta: es no hacerla.");
+  if(c.leaks > 0) tips.push("Diste por buenas " + c.leaks + " afirmación(es) sin verificar. Céntrate en lo que compromete: normas citadas, cifras con fuente, plazos y promesas. Todo lo que pueda acabar en una reclamación se comprueba.");
+  if(c.over > 2) tips.push("Marcaste " + c.over + " frases que no lo necesitaban. Si hay que verificar el texto entero, sale más a cuenta escribirlo a mano; el criterio consiste precisamente en elegir qué merece la comprobación.");
+  if(!S.tools.perfect) tips.push("En la elección de herramienta cediste ante la prisa o la comodidad. La regla es sencilla: el material de la empresa solo entra en herramientas que la empresa haya aprobado, y si la aprobada va mal, eso se reporta.");
+  if(tips.length === 0) tips.push("Sin puntos débiles en este simulacro. El siguiente paso es sostenerlo cuando haya prisa, que es cuando de verdad se decide: las fugas casi nunca ocurren por desconocimiento, sino por urgencia.");
+
+  $("#reportBody").innerHTML =
+    '<div class="rank"><div class="medal" aria-hidden="true">' + medal + "</div>"
+    + '<div class="eyebrow" style="margin-top:12px">Informe de ' + esc(S.name) + " · " + esc(CONFIG.empresa) + "</div>"
+    + "<h2>" + rank + "</h2>"
+    + '<div class="score">Resultado global <b style="color:' + color(glob) + '">' + glob + "%</b> · "
+    + S.xp + " puntos · información protegida " + S.prot + "%"
+    + (ROUND.seed ? " · tanda " + esc(ROUND.seed) : "") + "</div>"
+    + '<p class="lead" style="margin:18px auto 0;text-align:left">' + rtxt + "</p></div>"
+
+    + '<div class="stats">'
+    + '<div class="card stat"><div class="lab">Datos protegidos</div><div class="big" style="color:' + color(proteccion) + '">'
+      + p.hits + "/" + totalSens + '</div><div class="note">Fragmentos sensibles tapados a tiempo</div></div>'
+    + '<div class="card stat"><div class="lab">Fugas</div><div class="big" style="color:'
+      + (p.leaks === 0 ? "var(--ok)" : "var(--err)") + '">' + p.leaks
+      + '</div><div class="note">Fragmentos sensibles enviados fuera</div></div>'
+    + '<div class="card stat"><div class="lab">Exceso de celo</div><div class="big" style="color:'
+      + (p.over + c.over === 0 ? "var(--ok)" : "var(--warn)") + '">' + (p.over + c.over)
+      + '</div><div class="note">Fragmentos tapados o marcados sin necesidad</div></div>'
+    + '<div class="card stat"><div class="lab">Bulos detectados</div><div class="big" style="color:' + color(verificacion) + '">'
+      + c.hits + "/" + totalSensC + '</div><div class="note">Afirmaciones inventadas marcadas</div></div>'
+    + "</div>"
+
+    + '<div class="sec-t">Desglose por competencia</div>'
+    + '<div class="card" style="padding:22px">'
+    + metric("Protección de la información", proteccion, "Reconocer qué no debe salir de la empresa.")
+    + metric("Moderación al tapar", moderacion, "No inutilizar la herramienta ocultando lo que sí necesita.")
+    + metric("Verificación de respuestas", verificacion, "Detectar datos, normas y cifras que la IA se ha inventado.")
+    + metric("Criterio al verificar", criterio, "Comprobar lo que compromete sin desconfiar de todo.")
+    + metric("Elección de herramienta", herramientas, "Usar la IA aprobada en lugar de atajos personales.")
+    + "</div>"
+
+    + '<div class="sec-t">Logros · ' + S.badges.size + " de " + BADGES.length + "</div>"
+    + '<div class="badges">' + BADGES.map(b =>
+        '<div class="badge ' + (S.badges.has(b.id) ? "got" : "") + '"><div class="bi" aria-hidden="true">' + b.ic
+        + '</div><div class="bn">' + b.n + '</div><div class="bd">' + b.d + "</div></div>").join("") + "</div>"
+
+    + '<div class="sec-t">Categorías de riesgo cubiertas</div>'
+    + '<p style="color:var(--dim);font-size:12.5px;line-height:1.6;margin-bottom:12px">'
+    + "Riesgos a los que te has enfrentado en esta tanda y cómo los has resuelto. "
+    + "Repite el simulacro para cubrir los que no salieron sorteados.</p>"
+    + '<div class="rlist">' + rrows + "</div>"
+
+    + '<div class="sec-t">Tu plan de mejora</div>'
+    + '<div class="tips">' + tips.map(t => '<div class="tip">' + esc(t) + "</div>").join("") + "</div>"
+
+    + '<div class="sec-t">Las tres preguntas que resuelven casi todo</div>'
+    + '<div class="card" style="padding:22px;font-size:14px;line-height:1.75;color:var(--txt-2)">'
+    + "<p><b>¿La IA necesita esto para hacer la tarea?</b> Si un dato no cambia la respuesta y además identifica a alguien, no tiene que estar ahí. Casi siempre se puede pedir ayuda con la forma sin entregar el fondo.</p>"
+    + '<p style="margin-top:12px"><b>¿Qué pasa si esto es mentira?</b> Aplícalo a cada afirmación concreta. Si la respuesta es «nada», sigue adelante. Si es «una reclamación del cliente», compruébalo antes de firmarlo.</p>'
+    + '<p style="margin-top:12px"><b>¿Dónde estoy escribiendo?</b> La misma frase es inofensiva en la herramienta aprobada y una fuga en una web gratuita cuyas condiciones dicen que usarán lo que subas.</p>'
+    + "</div>"
+
+    + '<div class="card" style="padding:20px;margin-top:16px;background:var(--pri-soft);border-color:#c9dcf3">'
+    + '<p style="font-size:14px;line-height:1.7">¿Tienes dudas sobre si puedes usar una herramienta de IA para alguna tarea concreta? '
+    + "Pregúntanos en " + contactoHTML() + ". Preferimos resolver la duda antes que enterarnos después.</p></div>"
+
+    + '<div style="margin-top:30px;display:flex;gap:11px;justify-content:center;flex-wrap:wrap" class="no-print">'
+    + '<button class="btn" id="bPrint">Guardar en PDF o imprimir</button>'
+    + '<button class="btn sec" id="bRestart">Repetir el simulacro</button></div>'
+    + '<p style="text-align:center;color:var(--dim);font-size:12px;margin-top:24px" class="no-print">'
+    + "Portapapeles · material educativo · todos los documentos y personas son ficticios</p>";
+
+  $("#bPrint").addEventListener("click", () => window.print());
+  $("#bRestart").addEventListener("click", () => location.reload());
+}
+
+/* ---------------------------------------------------------------
+   11. ATAJOS DE TECLADO
+   --------------------------------------------------------------- */
+document.addEventListener("keydown", e => {
+  if($("#scr-tools").classList.contains("on")){
+    const i = parseInt(e.key, 10);
+    if(i >= 1 && i <= 4){
+      const b = $$("#opts .opt")[i - 1];
+      if(b) b.click();
+    }
+  }
+});
+
+renderHUD();
+</script>
+</body>
+</html>
