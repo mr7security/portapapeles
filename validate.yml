@@ -1,0 +1,48 @@
+name: Validar contenido
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Integridad del simulacro
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v5
+
+      - name: Preparar Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '24'
+
+      - name: Comprobar que el JavaScript es sintácticamente válido
+        run: |
+          node -e "
+            const fs = require('fs');
+            const html = fs.readFileSync('index.html', 'utf8');
+            const m = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
+            if (!m.length) { console.error('No se encontró ningún bloque <script>'); process.exit(1); }
+            m.forEach((s, i) => {
+              try { new Function(s[1]); }
+              catch (e) { console.error('Error de sintaxis en el script ' + (i + 1) + ': ' + e.message); process.exit(1); }
+            });
+            console.log('✔ ' + m.length + ' bloque(s) de script sin errores de sintaxis');
+          "
+
+      - name: Validar el contenido del simulacro
+        run: node tools/validate.mjs
+
+      - name: Comprobar que no hay recursos externos
+        run: |
+          if grep -nP '(?<![-\w])(src|href)="https?://' index.html; then
+            echo "✖ index.html referencia recursos externos: debe funcionar sin conexión"
+            exit 1
+          fi
+          echo "✔ Sin dependencias externas"
